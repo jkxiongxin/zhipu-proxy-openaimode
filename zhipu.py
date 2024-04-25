@@ -17,9 +17,13 @@ def chat_completions():
     response = client.chat.completions.create(model=model, messages=messages, stream=stream)
     def generate():
         for chunk in response:
-            json_string = chunk.model_dump_json() + '\n\n'
-            yield json_string
-
+            chunk = chunk.model_dump_json(exclude_none=True)
+            try:
+                yield f"data: {chunk}\n\n"
+            except Exception as e:
+                yield f"data: {str(e)}\n\n"
+        done_message = "[DONE]"
+        yield f"data: {done_message}\n\n"
     return Response(generate(), mimetype='text/event-stream')
 
 @app.route('/v1/models', methods=['GET'])
